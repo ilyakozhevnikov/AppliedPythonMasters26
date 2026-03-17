@@ -19,7 +19,6 @@ class UrlShortenerUser(HttpUser):
         email = f"load_{random.randint(1, 10_000_000)}@example.com"
         password = "secret"
 
-        # Best-effort: register and login (service allows guests too)
         self.client.post("/auth/register", json={"email": email, "password": password}, name="/auth/register")
         r = self.client.post(
             "/auth/token",
@@ -33,7 +32,6 @@ class UrlShortenerUser(HttpUser):
     @task(6)
     def create_links_mass(self):
         payload = {"original_url": _rand_url()}
-        # Some links with TTL to exercise cleanup paths
         if random.random() < 0.1:
             payload["expires_at"] = (datetime.now(timezone.utc) + timedelta(minutes=30)).isoformat()
 
