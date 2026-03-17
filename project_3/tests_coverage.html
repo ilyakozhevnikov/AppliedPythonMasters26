@@ -1,0 +1,12 @@
+(base) iliakozhevnikov@Ilias-MacBook-Air pythonProject % coverage run -m pytest tests -q && coverage report -m
+.............                                                                        [100%]
+13 passed in 5.43s
+Name                           Stmts   Miss  Cover   Missing
+------------------------------------------------------------
+main.py                          336     36    89%   275-277, 280, 367, 415-416, 471-485, 513, 553, 580, 598, 601, 634, 654-661, 718-719, 724, 728-729
+tests/conftest.py                 71      4    94%   41-43, 61
+tests/test_api_functional.py     125      0   100%
+tests/test_unit_core.py           25      0   100%
+------------------------------------------------------------
+TOTAL                            557     40    93%
+(base) iliakozhevnikov@Ilias-MacBook-Air pythonProject % 
