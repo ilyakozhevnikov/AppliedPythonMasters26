@@ -51,7 +51,6 @@ async def test_create_short_link_guest_and_redirect_increments_stats(client, app
     assert r.status_code == 200, r.text
     short_code = r.json()["short_code"]
 
-    # Redis warmed up on create
     assert app_module.redis_client.get(app_module.cache_key_for_short_code(short_code)) in {
         "https://example.org",
         "https://example.org/",
@@ -101,7 +100,6 @@ async def test_expires_at_past_causes_404_on_redirect_and_moves_to_history(clien
     r = await client.get(f"/{short_code}", follow_redirects=False)
     assert r.status_code == 404
 
-    # After redirect attempt, it should be removed from links and exist in history
     s = app_module.SessionLocal()
     try:
         assert s.query(app_module.Link).filter(app_module.Link.short_code == short_code).first() is None
@@ -128,7 +126,6 @@ async def test_update_and_delete_require_owner(client):
     assert r.status_code == 200, r.text
     code = r.json()["short_code"]
 
-    # Other user cannot update/delete
     r = await client.put(
         f"/links/{code}",
         json={"new_original_url": "https://example.com/b"},
@@ -138,7 +135,6 @@ async def test_update_and_delete_require_owner(client):
     r = await client.delete(f"/links/{code}", headers=auth_headers(token_other))
     assert r.status_code == 403
 
-    # Owner can update original_url
     r = await client.put(
         f"/links/{code}",
         json={"new_original_url": "https://example.com/b"},
@@ -147,7 +143,6 @@ async def test_update_and_delete_require_owner(client):
     assert r.status_code == 200, r.text
     assert r.json()["original_url"] == "https://example.com/b"
 
-    # Owner can change short_code
     r = await client.put(
         f"/links/{code}",
         json={"new_short_code": "newcode1"},
@@ -156,7 +151,6 @@ async def test_update_and_delete_require_owner(client):
     assert r.status_code == 200, r.text
     assert r.json()["short_code"] == "newcode1"
 
-    # Delete works
     r = await client.delete("/links/newcode1", headers=auth_headers(token_owner))
     assert r.status_code == 204
 
@@ -166,12 +160,10 @@ async def test_search_by_original_url_returns_only_users_links(client):
     token = await register_and_login(client, email="s@e.com")
     headers = auth_headers(token)
 
-    # Pydantic HttpUrl normalizes trailing slash, use normalized value consistently.
     r1 = await client.post("/links/shorten", json={"original_url": "https://q.com/"}, headers=headers)
     r2 = await client.post("/links/shorten", json={"original_url": "https://q.com/"}, headers=headers)
     assert r1.status_code == 200 and r2.status_code == 200
 
-    # Guest link with same original_url should not appear for this user
     await client.post("/links/shorten", json={"original_url": "https://q.com/"})
 
     r = await client.get("/links/search", params={"original_url": "https://q.com/"}, headers=headers)
@@ -214,7 +206,6 @@ async def test_stats_cached_path(client, app_module):
     assert r1.status_code == 200
     assert app_module.redis_client.hgetall(app_module.cache_key_for_stats(code)) != {}
 
-    # second call should serve from cache
     r2 = await client.get(f"/links/{code}/stats")
     assert r2.status_code == 200
     assert r2.json() == r1.json()
