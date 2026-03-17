@@ -55,7 +55,6 @@ def _test_env(tmp_path_factory):
     os.environ.setdefault("JWT_SECRET_KEY", "test-secret")
     os.environ.setdefault("INACTIVE_DELETE_DAYS", "30")
 
-    # Ensure repository root is importable (for `import main`)
     repo_root = str(Path(__file__).resolve().parents[1])
     if repo_root not in sys.path:
         sys.path.insert(0, repo_root)
@@ -78,12 +77,10 @@ def fake_redis(app_module, mocker):
 
 @pytest.fixture()
 def db(app_module, fake_redis):
-    # Ensure tables exist
     app_module.Base.metadata.create_all(bind=app_module.engine)
 
     session = app_module.SessionLocal()
     try:
-        # Clean all tables before each test (order matters)
         session.query(app_module.ExpiredLinkHistory).delete()
         session.query(app_module.Link).delete()
         session.query(app_module.Project).delete()
@@ -101,6 +98,5 @@ def now_utc():
 
 @pytest.fixture(scope="session")
 def anyio_backend():
-    # Avoid requiring trio in this project; run async tests on asyncio only.
     return "asyncio"
 
