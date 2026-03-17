@@ -290,7 +290,11 @@ def generate_short_code(length: int = 8) -> str:
 
 def ensure_unique_short_code(db: Session, desired: Optional[str] = None) -> str:
     if desired:
-        exists = db.query(Link).filter(Link.short_code == desired, Link.deleted is False).first()
+        exists = (
+            db.query(Link)
+            .filter(Link.short_code == desired, Link.deleted.is_(False))
+            .first()
+        )
         if exists:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -300,7 +304,11 @@ def ensure_unique_short_code(db: Session, desired: Optional[str] = None) -> str:
 
     while True:
         candidate = generate_short_code()
-        exists = db.query(Link).filter(Link.short_code == candidate, Link.deleted is False).first()
+        exists = (
+            db.query(Link)
+            .filter(Link.short_code == candidate, Link.deleted.is_(False))
+            .first()
+        )
         if not exists:
             return candidate
 
@@ -327,7 +335,7 @@ def cleanup_expired_and_inactive_links(db: Session) -> None:
     expired_links = (
         db.query(Link)
         .filter(
-            Link.deleted is False,
+            Link.deleted.is_(False),
             Link.expires_at.isnot(None),
             Link.expires_at <= now,
         )
@@ -339,7 +347,7 @@ def cleanup_expired_and_inactive_links(db: Session) -> None:
     inactive_links = (
         db.query(Link)
         .filter(
-            Link.deleted is False,
+            Link.deleted.is_(False),
             Link.last_accessed_at.isnot(None),
             Link.last_accessed_at <= threshold,
         )
@@ -441,7 +449,7 @@ def redirect_short_link(short_code: str, db: Session = Depends(get_db)):
     if cached_url:
         link = (
             db.query(Link)
-            .filter(Link.short_code == short_code, Link.deleted is False)
+            .filter(Link.short_code == short_code, Link.deleted.is_(False))
             .first()
         )
         if link:
@@ -454,7 +462,7 @@ def redirect_short_link(short_code: str, db: Session = Depends(get_db)):
 
     link = (
         db.query(Link)
-        .filter(Link.short_code == short_code, Link.deleted is False)
+        .filter(Link.short_code == short_code, Link.deleted.is_(False))
         .first()
     )
     if not link:
@@ -498,7 +506,7 @@ def get_link_stats(short_code: str, db: Session = Depends(get_db)):
 
     link = (
         db.query(Link)
-        .filter(Link.short_code == short_code, Link.deleted is False)
+        .filter(Link.short_code == short_code, Link.deleted.is_(False))
         .first()
     )
     if not link:
@@ -538,7 +546,7 @@ def delete_link(
 ):
     link = (
         db.query(Link)
-        .filter(Link.short_code == short_code, Link.deleted is False)
+        .filter(Link.short_code == short_code, Link.deleted.is_(False))
         .first()
     )
     if not link:
@@ -565,7 +573,7 @@ def update_link(
 ):
     link = (
         db.query(Link)
-        .filter(Link.short_code == short_code, Link.deleted is False)
+        .filter(Link.short_code == short_code, Link.deleted.is_(False))
         .first()
     )
     if not link:
@@ -617,7 +625,7 @@ def search_links_by_original_url(
 
     query = db.query(Link).filter(
         Link.original_url == original_url,
-        Link.deleted is False,
+        Link.deleted.is_(False),
     )
 
     if current_user:
@@ -676,7 +684,7 @@ def list_links_by_project(
         .filter(
             Link.project_id == project_id,
             Link.owner_id == current_user.id,
-            Link.deleted is False,
+            Link.deleted.is_(False),
         )
         .all()
     )
