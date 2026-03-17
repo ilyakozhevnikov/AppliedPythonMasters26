@@ -113,3 +113,26 @@
 Логика очистки:
 - Ссылка удаляется, когда ее expires_at находится в прошлом или когда last_accessed_at старше INACTIVE_DELETE_DAYS дней.
 - При удалении она копируется в expired_links_history и удаляется из ссылок, а ее кэши Redis очищаются.
+
+### Тестирование
+
+Юнит и функциональные тесты лежат в папке tests/
+
+Прогон тестов:
+- pytest -q
+
+Проверка покрытия:
+- coverage run -m pytest tests
+- coverage report -m
+
+Тесты используют SQLite как тестовую БД и мок Redis (in-memory), поэтому не требуют поднятого PostgreSQL/Redis.
+
+### Нагрузочное тестирование
+
+В корне проекта есть locustfile.py со сценариями:
+- массовое создание ссылок (POST /links/shorten)
+- горячие редиректы (GET /{short_code})
+- запросы статистики (GET /links/{short_code}/stats)
+
+Запуск:
+- locust -f locustfile.py --host http://localhost:8000
